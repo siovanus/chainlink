@@ -19,7 +19,6 @@ import (
 
 	"chainlink/core/utils"
 
-	gethParams "github.com/ethereum/go-ethereum/params"
 	"github.com/pkg/errors"
 	"github.com/tidwall/gjson"
 
@@ -38,8 +37,6 @@ type contractVersion struct {
 
 // integratedVersion carries the full versioning information checked in this test
 type integratedVersion struct {
-	// Version of geth last used to generate the wrappers
-	gethVersion string
 	// { golang-pkg-name: version_info }
 	contractVersions map[string]contractVersion
 }
@@ -50,10 +47,6 @@ type integratedVersion struct {
 // record_versions.sh for description of file format.
 func TestCheckContractHashesFromLastGoGenerate(t *testing.T) {
 	versions := readVersionsDB(t)
-	require.NotEmpty(t, versions.gethVersion,
-		`version DB should have a "GETH_VERSION:" line`)
-	require.Equal(t, versions.gethVersion, gethParams.Version,
-		"please re-run `go generate` in core/services/vrf")
 	for _, contractVersionInfo := range versions.contractVersions {
 		compareCurrentCompilerAritfactAgainstRecordsAndSoliditySources(
 			t, contractVersionInfo)
@@ -152,20 +145,14 @@ func readVersionsDB(t *testing.T) integratedVersion {
 		require.True(t, strings.HasSuffix(line[0], ":"),
 			`each line in versions.txt should start with "$TOPIC:"`)
 		topic := stripTrailingColon(line[0], "")
-		if topic == "GETH_VERSION" {
-			require.Len(t, line, 2,
-				"GETH_VERSION line should contain geth version, and only that")
-			require.Empty(t, rv.gethVersion, "more than one geth version")
-			rv.gethVersion = line[1]
-		} else { // It's a wrapper from a json compiler artifact
-			require.Len(t, line, 3,
-				`"%s" should have three elements "<pkgname>: <compiler-artifact-path> <compiler-artifact-hash>"`,
-				db.Text())
-			_, alreadyExists := rv.contractVersions[topic]
-			require.False(t, alreadyExists, `topic "%s" already mentioned!`, topic)
-			rv.contractVersions[topic] = contractVersion{
-				compilerArtifactPath: line[1], hash: line[2],
-			}
+
+		require.Len(t, line, 3,
+			`"%s" should have three elements "<pkgname>: <compiler-artifact-path> <compiler-artifact-hash>"`,
+			db.Text())
+		_, alreadyExists := rv.contractVersions[topic]
+		require.False(t, alreadyExists, `topic "%s" already mentioned!`, topic)
+		rv.contractVersions[topic] = contractVersion{
+			compilerArtifactPath: line[1], hash: line[2],
 		}
 	}
 	return rv
@@ -181,10 +168,8 @@ func init() {
 	var solidityArtifactsMissing []string
 	for db.Scan() {
 		line := strings.Fields(db.Text())
-		if stripTrailingColon(line[0], "") != "GETH_VERSION" {
-			if os.IsNotExist(utils.JustError(os.Stat(line[1]))) {
-				solidityArtifactsMissing = append(solidityArtifactsMissing, line[1])
-			}
+		if os.IsNotExist(utils.JustError(os.Stat(line[1]))) {
+			solidityArtifactsMissing = append(solidityArtifactsMissing, line[1])
 		}
 	}
 	if len(solidityArtifactsMissing) == 0 {
