@@ -61,7 +61,7 @@ contract FluxAggregator is AggregatorInterface, Owned {
   uint32 public minAnswerCount;
   uint32 public restartDelay;
   uint32 public timeout;
-  uint8 public decimals;
+  uint8 public override decimals;
   bytes32 public description;
 
   uint32 private reportingRoundId;
@@ -691,7 +691,7 @@ contract FluxAggregator is AggregatorInterface, Owned {
       rounds[latestRoundId].answer,
       finishedOrTimedOut ? 0 : rounds[_reportableRoundId].startedAt + rounds[_reportableRoundId].details.timeout,
       availableFunds,
-      finishedOrTimedOut ? paymentAmount : rounds[_reportableRoundId].details.paymentAmount
+      rounds[_reportableRoundId].details.paymentAmount
     );
   }
 
