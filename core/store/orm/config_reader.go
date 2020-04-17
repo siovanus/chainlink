@@ -33,8 +33,10 @@ type ConfigReader interface {
 	EthGasBumpWei() *big.Int
 	EthGasPriceDefault() *big.Int
 	EthMaxGasPriceWei() *big.Int
+	OntGasLimit() uint64
 	SetEthGasPriceDefault(value *big.Int) error
 	EthereumURL() string
+	OntologyRpc() string
 	JSONConsole() bool
 	LinkContractAddress() string
 	ExplorerURL() *url.URL

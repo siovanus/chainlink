@@ -32,7 +32,9 @@ type ConfigSchema struct {
 	EthGasBumpPercent         uint16         `env:"ETH_GAS_BUMP_PERCENT" default:"10"`
 	EthGasPriceDefault        big.Int        `env:"ETH_GAS_PRICE_DEFAULT" default:"20000000000"`
 	EthMaxGasPriceWei         uint64         `env:"ETH_MAX_GAS_PRICE_WEI" default:"500000000000"`
+	OntGasLimit               uint64         `env:"ONT_GAS_LIMIT" default:"20000"`
 	EthereumURL               string         `env:"ETH_URL" default:"ws://localhost:8546"`
+	OntologyRpc               string         `env:"ONT_RPC" default:"http://localhost:20336"`
 	JSONConsole               bool           `env:"JSON_CONSOLE" default:"false"`
 	LinkContractAddress       string         `env:"LINK_CONTRACT_ADDRESS" default:"0x514910771AF9Ca656af840dff83E8264EcF986CA"`
 	ExplorerURL               *url.URL       `env:"EXPLORER_URL"`

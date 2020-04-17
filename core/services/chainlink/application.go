@@ -58,6 +58,7 @@ type ChainlinkApplication struct {
 	StatsPusher synchronization.StatsPusher
 	services.RunManager
 	RunQueue                 services.RunQueue
+	OntTracker               *services.OntTracker
 	JobSubscriber            services.JobSubscriber
 	FluxMonitor              fluxmonitor.Service
 	Scheduler                *services.Scheduler
@@ -83,12 +84,14 @@ func NewApplication(config *orm.Config, onConnectCallbacks ...func(Application))
 	runExecutor := services.NewRunExecutor(store, statsPusher)
 	runQueue := services.NewRunQueue(runExecutor)
 	runManager := services.NewRunManager(runQueue, config, store.ORM, statsPusher, store.TxManager, store.Clock)
+	ontTracker := services.NewOntTracker(store, runManager, store.OntTxManager)
 	jobSubscriber := services.NewJobSubscriber(store, runManager)
 	fluxMonitor := fluxmonitor.New(store, runManager)
 
 	pendingConnectionResumer := newPendingConnectionResumer(runManager)
 
 	app := &ChainlinkApplication{
+		OntTracker:               ontTracker,
 		JobSubscriber:            jobSubscriber,
 		FluxMonitor:              fluxMonitor,
 		StatsPusher:              statsPusher,
@@ -150,6 +153,7 @@ func (app *ChainlinkApplication) Start() error {
 		app.HeadTracker.Start(),
 
 		app.Scheduler.Start(),
+		app.OntTracker.Start(),
 	)
 }
 
@@ -162,6 +166,7 @@ func (app *ChainlinkApplication) Stop() error {
 		logger.Info("Gracefully exiting...")
 
 		app.Scheduler.Stop()
+		app.OntTracker.Stop()
 		merr = multierr.Append(merr, app.HeadTracker.Stop())
 		app.JobSubscriber.Stop()
 		app.FluxMonitor.Stop()
@@ -201,6 +206,7 @@ func (app *ChainlinkApplication) AddJob(job models.JobSpec) error {
 	// XXX: Add mechanism to asynchronously communicate when a job spec has
 	// an ethereum interaction error.
 	// https://www.pivotaltracker.com/story/show/170349568
+	logger.ErrorIf(app.OntTracker.AddJob(job))
 	logger.ErrorIf(app.FluxMonitor.AddJob(job))
 	logger.ErrorIf(app.JobSubscriber.AddJob(job, nil))
 	return nil

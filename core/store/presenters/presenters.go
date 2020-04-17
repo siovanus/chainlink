@@ -374,6 +374,10 @@ func initiatorParams(i Initiator) (interface{}, error) {
 		return struct {
 			Address common.Address `json:"address"`
 		}{i.Address}, nil
+	case models.InitiatorOntEvent:
+		return struct {
+			Address common.Address `json:"address"`
+		}{i.Address}, nil
 	case models.InitiatorExternal:
 		return struct {
 			Name string `json:"name"`
@@ -630,6 +634,45 @@ func (Tx) GetName() string {
 // deserializing from jsonapi documents.
 func (t *Tx) SetID(hex string) error {
 	t.Hash = common.HexToHash(hex)
+	return nil
+}
+
+// Tx is a jsonapi wrapper for an Ethereum Transaction.
+type OntTx struct {
+	From     string `json:"from,omitempty"`
+	To       string `json:"to,omitempty"`
+	GasLimit uint64 `json:"gasLimit,omitempty"`
+	GasPrice uint64 `json:"gasPrice,omitempty"`
+	Hash     string `json:"hash,omitempty"`
+	Hex      string `json:"rawHex,omitempty"`
+}
+
+// NewOntTx builds a transaction presenter.
+func NewOntTx(tx *models.OntTx) OntTx {
+	return OntTx{
+		From:     tx.From,
+		To:       tx.To,
+		GasLimit: tx.GasLimit,
+		GasPrice: tx.GasPrice,
+		Hash:     tx.Hash,
+		Hex:      tx.SignedRawTx,
+	}
+}
+
+// GetID returns the jsonapi ID.
+func (t OntTx) GetID() string {
+	return t.Hash
+}
+
+// GetName returns the collection name for jsonapi.
+func (OntTx) GetName() string {
+	return "ont_transactions"
+}
+
+// SetID is used to conform to the UnmarshallIdentifier interface for
+// deserializing from jsonapi documents.
+func (t *OntTx) SetID(hex string) error {
+	t.Hash = hex
 	return nil
 }
 

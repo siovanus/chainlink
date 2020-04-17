@@ -105,6 +105,8 @@ func ValidateInitiator(i models.Initiator, j models.JobSpec, store *store.Store)
 		return validateServiceAgreementInitiator(i, j)
 	case models.InitiatorRunLog:
 		return validateRunLogInitiator(i, j)
+	case models.InitiatorOntEvent:
+		return validateOntEventInitiator(i, j)
 	case models.InitiatorFluxMonitor:
 		return validateFluxMonitor(i, j, store)
 	case models.InitiatorWeb:
@@ -201,6 +203,20 @@ func validateRunLogInitiator(i models.Initiator, j models.JobSpec) error {
 	}
 	if ethTxCount > 1 {
 		fe.Add("Cannot RunLog initiated jobs cannot have more than one EthTx Task")
+	}
+	return fe.CoerceEmptyToNil()
+}
+
+func validateOntEventInitiator(i models.Initiator, j models.JobSpec) error {
+	fe := models.NewJSONAPIErrors()
+	ontTxCount := 0
+	for _, task := range j.Tasks {
+		if task.Type == adapters.TaskTypeOntTx {
+			ontTxCount += 1
+		}
+	}
+	if ontTxCount > 1 {
+		fe.Add("OntEvent initiated jobs cannot have more than one OntTx Task")
 	}
 	return fe.CoerceEmptyToNil()
 }

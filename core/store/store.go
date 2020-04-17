@@ -3,6 +3,10 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/ontio/ontology-crypto/keypair"
+	"github.com/ontio/ontology-crypto/signature"
+	"github.com/ontio/ontology/common"
+	"github.com/ontio/ontology/common/password"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -19,6 +23,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/jinzhu/gorm"
+	ontology_go_sdk "github.com/ontio/ontology-go-sdk"
 	"github.com/pkg/errors"
 	"github.com/tevino/abool"
 	"go.uber.org/multierr"
@@ -29,12 +34,13 @@ import (
 // for keeping the application state in sync with the database.
 type Store struct {
 	*orm.ORM
-	Config      *orm.Config
-	Clock       utils.AfterNower
-	KeyStore    *KeyStore
-	VRFKeyStore *VRFKeyStore
-	TxManager   TxManager
-	closeOnce   sync.Once
+	Config       *orm.Config
+	Clock        utils.AfterNower
+	KeyStore     *KeyStore
+	VRFKeyStore  *VRFKeyStore
+	TxManager    TxManager
+	OntTxManager *OntTxManager
+	closeOnce    sync.Once
 }
 
 type lazyRPCWrapper struct {
@@ -168,16 +174,34 @@ func newStoreWithDialerAndKeyStore(
 	if err := orm.ClobberDiskKeyStoreWithDBKeys(config.KeysDir()); err != nil {
 		logger.Fatal(fmt.Sprintf("Unable to migrate key store to disk: %+v", err))
 	}
+	sdk := ontology_go_sdk.NewOntologySdk()
+	sdk.NewRpcClient().SetAddress(config.OntologyRpc())
 
 	keyStore := keyStoreGenerator()
+	path := config.RootDir() + "/wallet.dat"
+	var acct *ontology_go_sdk.Account
+	if common.FileExisted(path) {
+		acct, err = getOntAccount(path)
+		if err != nil {
+			logger.Fatal(fmt.Sprintf("Unable to get ontology account: %+v", err))
+		}
+	} else {
+		acct, err = newOntAccount(path)
+		if err != nil {
+			logger.Fatal(fmt.Sprintf("Unable to new ontology account: %+v", err))
+		}
+	}
+
 	callerSubscriberClient := &eth.CallerSubscriberClient{CallerSubscriber: ethrpc}
 	txManager := NewEthTxManager(callerSubscriberClient, config, keyStore, orm)
+	ontTxManager := NewOntTxManager(sdk, acct, config, orm)
 	store := &Store{
-		Clock:     utils.Clock{},
-		Config:    config,
-		KeyStore:  keyStore,
-		ORM:       orm,
-		TxManager: txManager,
+		Clock:        utils.Clock{},
+		Config:       config,
+		KeyStore:     keyStore,
+		ORM:          orm,
+		TxManager:    txManager,
+		OntTxManager: ontTxManager,
 	}
 	store.VRFKeyStore = NewVRFKeyStore(store)
 	return store
@@ -234,6 +258,36 @@ func (s *Store) SyncDiskKeyStoreToDB() error {
 		}
 	}
 	return merr
+}
+
+func newOntAccount(path string) (*ontology_go_sdk.Account, error) {
+	wallet := ontology_go_sdk.NewWallet(path)
+	pass, _ := password.GetConfirmedPassword()
+	account, err := wallet.NewAccount(keypair.PK_ECDSA, keypair.P256, signature.SHA256withECDSA, pass)
+	if err != nil {
+		return nil, err
+	}
+	err = wallet.Save()
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
+}
+
+func getOntAccount(path string) (*ontology_go_sdk.Account, error) {
+	wallet, err := ontology_go_sdk.OpenWallet(path)
+	if err != nil {
+		logger.Fatal(fmt.Sprintf("error opening ontology wallet: %s", err))
+	}
+	pwd, err := password.GetPassword()
+	if err != nil {
+		return nil, err
+	}
+	account, err := wallet.GetDefaultAccount(pwd)
+	if err != nil {
+		return nil, err
+	}
+	return account, nil
 }
 
 func initializeORM(config *orm.Config, shutdownSignal gracefulpanic.Signal) (*orm.ORM, error) {

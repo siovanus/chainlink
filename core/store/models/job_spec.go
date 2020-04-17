@@ -147,6 +147,16 @@ func (j JobSpec) IsLogInitiated() bool {
 	return false
 }
 
+// IsLogInitiated Returns true if any of the job's initiators are triggered by event logs.
+func (j JobSpec) IsOntEventInitiated() bool {
+	for _, initr := range j.Initiators {
+		if initr.IsOntEventInitiated() {
+			return true
+		}
+	}
+	return false
+}
+
 // Ended returns true if the job has ended.
 func (j JobSpec) Ended(t time.Time) bool {
 	if !j.EndAt.Valid {
@@ -184,6 +194,9 @@ const (
 	// InitiatorFluxMonitor for tasks in a job to be run on price deviation
 	// or request for a new round of prices.
 	InitiatorFluxMonitor = "fluxmonitor"
+	// InitiatorOntEvent for tasks in a job to watch an ontology address
+	// and expect a JSON payload from a log event.
+	InitiatorOntEvent = "ontevent"
 	// InitiatorRandomnessLog for tasks from a VRF specific contract
 	InitiatorRandomnessLog = "randomnesslog"
 )
@@ -293,6 +306,11 @@ func (i Initiator) IsLogInitiated() bool {
 		}
 	}
 	return false
+}
+
+// IsOntEventInitiated Returns true if triggered by ont event logs.
+func (i Initiator) IsOntEventInitiated() bool {
+	return i.Type == InitiatorOntEvent
 }
 
 // Feeds holds the json of the feeds parameter in the job spec. It is an array of

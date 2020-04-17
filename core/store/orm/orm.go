@@ -681,6 +681,47 @@ func (orm *ORM) MarkTxSafe(tx *models.Tx, txAttempt *models.TxAttempt) error {
 	return orm.db.Save(tx).Error
 }
 
+// CreateOntTx returns a transaction by its surrogate key, if it exists, or
+// creates it
+func (orm *ORM) CreateOntTx(ontTx *models.OntTx) (*models.OntTx, error) {
+	orm.MustEnsureAdvisoryLock()
+
+	err := orm.convenientTransaction(func(dbtx *gorm.DB) error {
+		var query *gorm.DB
+		if ontTx.SurrogateID.Valid {
+			query = dbtx.First(&models.OntTx{}, "surrogate_id = ?", ontTx.SurrogateID.ValueOrZero())
+		} else {
+			query = dbtx.First(&models.OntTx{}, "hash = ?", ontTx.Hash)
+		}
+
+		ids := []uint64{}
+		err := query.Pluck("id", &ids).Error
+		if err != nil && err != gorm.ErrRecordNotFound {
+			return errors.Wrap(err, "CreateTx#First failed")
+		}
+
+		if err == gorm.ErrRecordNotFound {
+			return dbtx.Create(ontTx).Error
+		}
+		ontTx.ID = ids[0]
+		return dbtx.Save(ontTx).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ontTx, nil
+}
+
+// FindOntTx returns the specific transaction with the hash.
+func (orm *ORM) FindOntTx(hash common.Hash) (*models.OntTx, error) {
+	orm.MustEnsureAdvisoryLock()
+	ontTx := &models.OntTx{}
+	if err := orm.db.First(ontTx, "hash = ?", hash).Error; err != nil {
+		return nil, err
+	}
+	return ontTx, nil
+}
+
 func preloadAttempts(dbtx *gorm.DB) *gorm.DB {
 	return dbtx.
 		Preload("Attempts", func(db *gorm.DB) *gorm.DB {
@@ -934,6 +975,19 @@ func (orm *ORM) Transactions(offset, limit int) ([]models.Tx, int, error) {
 	return txs, count, err
 }
 
+// OntTransactions returns all ont transactions limited by passed parameters.
+func (orm *ORM) OntTransactions(offset, limit int) ([]models.OntTx, int, error) {
+	orm.MustEnsureAdvisoryLock()
+	count, err := orm.CountOf(&models.OntTx{})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var txs []models.OntTx
+	err = orm.getRecords(&txs, "id desc", offset, limit)
+	return txs, count, err
+}
+
 // TxAttempts returns the last tx attempts sorted by sent at descending.
 func (orm *ORM) TxAttempts(offset, limit int) ([]models.TxAttempt, int, error) {
 	orm.MustEnsureAdvisoryLock()
@@ -1047,6 +1101,19 @@ func (orm *ORM) UpdateBridgeType(bt *models.BridgeType, btr *models.BridgeTypeRe
 func (orm *ORM) CreateInitiator(initr *models.Initiator) error {
 	orm.MustEnsureAdvisoryLock()
 	return orm.db.Create(initr).Error
+}
+
+// SaveTx saves the Ethereum Transaction.
+func (orm *ORM) SaveOntHeight(ontHeight *models.OntHeight) error {
+	orm.MustEnsureAdvisoryLock()
+	return orm.db.Save(ontHeight).Error
+}
+
+// FirstOrCreateOntHeight returns ont height found or creates a new one in the orm.
+func (orm *ORM) FirstOrCreateOntHeight(ontHeight *models.OntHeight) (*models.OntHeight, error) {
+	orm.MustEnsureAdvisoryLock()
+	err := orm.db.FirstOrCreate(ontHeight).Error
+	return ontHeight, err
 }
 
 // CreateHead creates a head record that tracks which block heads we've observed in the HeadTracker

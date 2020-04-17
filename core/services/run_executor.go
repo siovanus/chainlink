@@ -108,6 +108,9 @@ func (re *runExecutor) executeTask(run *models.JobRun, taskRun *models.TaskRun) 
 	taskCopy := taskRun.TaskSpec // deliberately copied to keep mutations local
 
 	params, err := models.Merge(run.RunRequest.RequestParams, taskCopy.Params)
+	logger.Infof("###run.RunRequest.RequestParams: %v", run.RunRequest.RequestParams)
+	logger.Infof("###taskCopy.Params: %v", taskCopy.Params)
+	logger.Infof("###params: %v", params)
 	if err != nil {
 		return models.NewRunOutputError(err)
 	}
@@ -129,7 +132,7 @@ func (re *runExecutor) executeTask(run *models.JobRun, taskRun *models.TaskRun) 
 	if err != nil {
 		return models.NewRunOutputError(err)
 	}
-
+	logger.Infof("###data: %v", data)
 	input := *models.NewRunInput(run.ID, data, taskRun.Status)
 	result := adapter.Perform(input, re.store)
 	promAdapterCallsVec.WithLabelValues(run.JobSpecID.String(), string(adapter.TaskType()), string(result.Status())).Inc()

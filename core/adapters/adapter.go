@@ -23,6 +23,8 @@ var (
 	TaskTypeEthUint256 = models.MustNewTaskType("ethuint256")
 	// TaskTypeEthTx is the identifier for the EthTx adapter.
 	TaskTypeEthTx = models.MustNewTaskType("ethtx")
+	// TaskTypeOntTx is the identifier for the OntTx adapter.
+	TaskTypeOntTx = models.MustNewTaskType("onttx")
 	// TaskTypeEthTxABIEncode is the identifier for the EthTxABIEncode adapter.
 	TaskTypeEthTxABIEncode = models.MustNewTaskType("ethtxabiencode")
 	// TaskTypeHTTPGetWithUnrestrictedNetworkAccess is the identifier for the HTTPGet adapter, with local/private IP access enabled.
@@ -102,6 +104,9 @@ func For(task models.TaskSpec, config orm.ConfigReader, orm *orm.ORM) (*Pipeline
 		err = unmarshalParams(task.Params, ba)
 	case TaskTypeEthTx:
 		ba = &EthTx{}
+		err = unmarshalParams(task.Params, ba)
+	case TaskTypeOntTx:
+		ba = &OntTx{}
 		err = unmarshalParams(task.Params, ba)
 	case TaskTypeEthTxABIEncode:
 		ba = &EthTxABIEncode{}

@@ -78,8 +78,14 @@ func Migrate(tx *gorm.DB) error {
 	if err := tx.AutoMigrate(&Tx{}).Error; err != nil {
 		return errors.Wrap(err, "failed to auto migrate Tx")
 	}
+	if err := tx.AutoMigrate(&models.OntTx{}).Error; err != nil {
+		return errors.Wrap(err, "failed to auto migrate OntTx")
+	}
 	if err := tx.AutoMigrate(&models.User{}).Error; err != nil {
 		return errors.Wrap(err, "failed to auto migrate User")
+	}
+	if err := tx.AutoMigrate(&models.OntHeight{}).Error; err != nil {
+		return errors.Wrap(err, "failed to auto migrate OntHeight")
 	}
 	return nil
 }

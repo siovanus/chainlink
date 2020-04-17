@@ -227,6 +227,11 @@ func (c Config) EthGasPriceDefault() *big.Int {
 	return c.getWithFallback("EthGasPriceDefault", parseBigInt).(*big.Int)
 }
 
+// OntGasLimit is the ontology gas limit
+func (c Config) OntGasLimit() uint64 {
+	return c.viper.GetUint64(EnvVarName("OntGasLimit"))
+}
+
 // SetEthGasPriceDefault saves a runtime value for the default gas price for transactions
 func (c Config) SetEthGasPriceDefault(value *big.Int) error {
 	if c.runtimeStore == nil {
@@ -238,6 +243,10 @@ func (c Config) SetEthGasPriceDefault(value *big.Int) error {
 // EthereumURL represents the URL of the Ethereum node to connect Chainlink to.
 func (c Config) EthereumURL() string {
 	return c.viper.GetString(EnvVarName("EthereumURL"))
+}
+
+func (c Config) OntologyRpc() string {
+	return c.viper.GetString(EnvVarName("OntologyRpc"))
 }
 
 // JSONConsole enables the JSON console.

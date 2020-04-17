@@ -255,6 +255,10 @@ func v2Routes(app chainlink.Application, r *gin.RouterGroup) {
 		authv2.GET("/transactions", paginatedRequest(txs.Index))
 		authv2.GET("/transactions/:TxHash", txs.Show)
 
+		otxs := OntTransactionsController{app}
+		authv2.GET("/ont_transactions", paginatedRequest(otxs.Index))
+		authv2.GET("/ont_transactions/:TxHash", otxs.Show)
+
 		bdc := BulkDeletesController{app}
 		authv2.DELETE("/bulk_delete_runs", bdc.Delete)
 	}

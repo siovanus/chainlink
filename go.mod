@@ -11,7 +11,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
-	github.com/btcsuite/btcd v0.0.0-20190115013929-ed77733ec07d
+	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/codegangsta/negroni v1.0.0 // indirect
 	github.com/danielkov/gin-helmet v0.0.0-20171108135313-1387e224435e
@@ -20,6 +20,7 @@ require (
 	github.com/ethereum/go-ethereum v1.9.11
 	github.com/fatih/color v1.9.0
 	github.com/fxamacker/cbor/v2 v2.2.0
+	github.com/garslo/gogen v0.0.0-20170307003452-d6ebae628c7c // indirect
 	github.com/garyburd/redigo v1.6.0 // indirect
 	github.com/gedex/inflector v0.0.0-20170307190818-16278e9db813 // indirect
 	github.com/gin-contrib/cors v1.3.1
@@ -46,13 +47,17 @@ require (
 	github.com/mrwonko/cron v0.0.0-20180828170130-e0ddd0f7e7db
 	github.com/olekukonko/tablewriter v0.0.4
 	github.com/onsi/gomega v1.9.0
-	github.com/pborman/uuid v0.0.0-20180906182336-adf5a7427709 // indirect
+	github.com/ontio/ontology v1.8.2
+	github.com/ontio/ontology-crypto v1.0.7
+	github.com/ontio/ontology-eventbus v0.9.1
+	github.com/ontio/ontology-go-sdk v1.11.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.5.1
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/cors v1.6.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v0.0.0-20191130220710-360f2bc03045
+	github.com/smartcontractkit/gencodec v0.0.0-20181025021405-42dc7da8c287 // indirect
 	github.com/spf13/afero v1.2.1 // indirect
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
@@ -69,7 +74,7 @@ require (
 	go.dedis.ch/kyber/v3 v3.0.12
 	go.uber.org/multierr v1.5.0
 	go.uber.org/zap v1.14.1
-	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/text v0.3.2
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
